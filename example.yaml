@@ -1,77 +1,359 @@
----
 swagger: '2.0'
 info:
-  version: 1.0.5
+  version: '1.0.0'
   title: Pizza Slicer API
-  description: With this API you can predict how many slices you need to cut your
-    pizza for a given crowd.
+  description: A multitentant API To for ordering pizza's and distributing (aka "slicing") their parts at the a party of your choosing.
   contact:
-    name: Awesome startup
-    url: http://www.awesomestartup.be
-    email: joe@awesomestartup.be
-host: "{{host}}"
-basePath: "/{{domain}}/{{apiname}}/{{apiversion}}"
-schemes:
-- "https"
+    name: your name
+    url: http://more.information.com/about/your/pizza/service
+    email: contact@email.com
+host: api-gw.antwerpen.be
+basePath: /acpaas/pizza-service/v1
+schemes: 
+- https
 paths:
   "/pizzas":
+    get:
+      summary: Returns all pizzas ordered for your party (tenant)
+      description: A complete list of pizzas that we have in our records for your party (tenant) 
+      tags:
+      - Pizza
+      produces:
+      - application/hal+json
+      responses:
+        200:
+          description: OK
+          schema: 
+            $ref: '#/definitions/pizzas'
+        400:
+          description: Bad request
+          schema:
+            $ref: '#/definitions/error'
+        404:
+          description: Not found
+          schema:
+            $ref: '#/definitions/error'
+        500:
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/error'
     post:
       summary: Add a pizza to the party
       description: You can add as many pizza's to the party as you want. Be sure to
         waste no food however.
-      produces:
+      consumes:
       - application/json
+      tags:
+      - Pizza
       parameters:
       - "$ref": "#/parameters/apikeyParam"
       - "$ref": "#/parameters/tenantParam"
+      - in: body
+        name: pizza
+        required: true
+        schema: 
+          $ref: "#/definitions/pizzaBody"
       responses:
-        '201':
+        201:
           description: Pizza added
-  pizzas/{pizzaId}:
+        500:
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/error'
+  "/pizzas/{id}":
     get:
-      summary: Get the pizza by Id
-      description: Retrieve the flavor, size and awesomeness of the pizza that we've
-        numbered for you.
+      summary: Retrieve details about one specific pizza
+      description: Retrieve pizza details like the flavor, size and awesomeness that we have in our database for the given id.
+      tags:
+        - Pizza
       produces:
-      - application/json
+        - application/json
+        - application/problem+json
       parameters:
-      - name: pizzaId
-        description: The number on the side of the pizzabox
-        in: path
-        required: true
-        type: string
-      - "$ref": "#/parameters/apikeyParam"
-      - "$ref": "#/parameters/tenantParam"
+        - "$ref": "#/parameters/apikeyParam"
+        - "$ref": "#/parameters/tenantParam"
+        - in: path
+          name: id
+          type: string
+          required: true
+          minimum: 1
+          description: The id of the template in the form of a uri.
       responses:
-        '200':
-          description: Ok
-  pizzas/{pizzaId}/slice:
-    put:
-      summary: Slices the pizza
-      description: Ready to dive in? Slice the pizza and distribute the pieces.
+        200:
+          description: OK
+          schema:
+            $ref: '#/definitions/pizzas'
+        400:
+          description: Bad request
+          schema:
+            $ref: '#/definitions/error'
+        404:
+          description: Not found
+          schema:
+            $ref: '#/definitions/error'
+        500:
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/error'
+    head:
+      summary: Quick check if a specific pizza actually exists 
+      description: Returns a HTTP 200 ok when the pizza with the given id actually exists, otherwise a HTTP 404
+      tags:
+        - Pizza
       produces:
-      - application/json
+        - application/json
+        - application/problem+json
       parameters:
-      - name: pizzaId
-        description: The number on the side of the pizzabox
-        in: path
-        required: true
-        type: string
-      - "$ref": "#/parameters/apikeyParam"
-      - "$ref": "#/parameters/tenantParam"
+        - "$ref": "#/parameters/apikeyParam"
+        - "$ref": "#/parameters/tenantParam"
+        - in: path
+          name: id
+          type: string
+          required: true
+          minimum: 1
+          description: The id of the template in the form of a uri.
       responses:
-        '200':
-          description: Ok
+        200:
+          description: OK
+        400:
+          description: Bad request
+          schema:
+            $ref: '#/definitions/error'
+        404:
+          description: Not found
+          schema:
+            $ref: '#/definitions/error'
+        500:
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/error'
+  "/system/status/health":
+    get:
+      summary: Returns the health status of this Service
+      description: Returns high level information about the service according to the status &amp; [monitoring spec of Digipolis](https://github.com/digipolisantwerpdocumentation/status-monitoring)
+      tags:
+      - System
+      produces:
+        - application/json
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: '#/definitions/healthStatus'  
+        500:
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/error'
+  "/system/status/health/components":
+    get:
+      summary: Returns the health status of this Service
+      description: Returns information about the service and its underlying components according to the status &amp; [monitoring spec of Digipolis](https://github.com/digipolisantwerpdocumentation/status-monitoring)
+      tags:
+      - System
+      produces:
+        - application/json
+        - application/problem+json
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: '#/definitions/healthStatusComponents'  
+        500:
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/error'  
+            
+# Parameters at the root level are globally definend and can be referenced by any operation            
 parameters:
   apikeyParam:
     name: apikey
-    description: from a contract in the api store
+    description: the API key, received from the API Store based on your contract.
     in: header
     required: true
     type: string
   tenantParam:
     name: tenant
-    description: the name of the tenant you want to use
+    description: each party where pizza is needed is hosted on a separate tenant
     in: header
     required: true
     type: string
+
+definitions:
+  pizzaBody: 
+    type: object
+    properties:
+      name: 
+        type: string
+        description: the commercial name of the pizza
+      size:
+        type: string
+        enum: 
+        - small
+        - medium
+        - large
+        example: small
+      toppings:
+        type: array
+        items: 
+          type: string
+          enum:
+          - Mushrooms
+          - Pepperoni
+          - Sausage
+          - Onion
+          - Black olives
+          - Extra cheese
+          - Green peppers
+        example: [Mushrooms, Onion]
+  pizza:
+    allOf: # Allows us to compose a model from an already defined model and some additional properties 
+    - type: object
+      properties:
+        id: 
+          type: string
+          description: the unique identifier of this pizza
+    - $ref: '#/definitions/pizzaBody'
+  pizzas:
+    type: object
+    properties:
+      _links:
+        $ref: '#/definitions/links'
+      _embedded: 
+        type: object
+        description: the collection of pizzas
+        properties:
+          pizzas:
+            type: array
+            items:
+              $ref: '#/definitions/pizza'
+      _page:
+        $ref: '#/definitions/pages'
+
+  links:
+    type: object
+    description: provides navigational uri's to other pages of the collection
+    properties:
+      self:
+        type: string
+        description: contains a link to this page of this collection
+        example: 'https://template-api.digipolis.be/base?pagesize=5&page=5'
+      first:
+        type: string
+        description: contains a link to the first page of this collection
+        example: 'https://template-api.digipolis.be/base?pagesize=5&page=0'
+      last:
+        type: string
+        description: contains a link to the last page of this collection
+        example: 'https://template-api.digipolis.be/base?pagesize=5&page=17'
+      prev:
+        type: string
+        description: contains a link to the previous page of this collection
+        example: 'https://template-api.digipolis.be/base?pagesize=5&page=0'
+      next:
+        type: string
+        description: contains a link to the next page of this collection
+        example: 'https://template-api.digipolis.be/base?pagesize=5&page=10'
+  pages:
+    type: object
+    description: a generic model used to describe paging information when requesting a list of resources
+    required: 
+    - size
+    - number
+    properties:
+      size:
+        type: integer
+        description: returns the size of a page provided in the pagesize query parameter of the request 
+        example: '10'
+      totalElements:
+        type: integer
+        description: the total number of items in the resulting collection
+        example: '34'
+      totalPages:
+        type: integer
+        description: the total number of pages in the resulting array. This is calculated with the given size value 
+        example: '4'
+      number:
+        type: integer
+        description: return the page number provided in the page query parameter of the resuest
+        example: '0'    
+  error:
+    type: object
+    description: a generic model used to describe errors as a result of incorrect or failed HTTP requests .
+    properties:
+      type:
+        type: string
+        description: A URI identifying this error. The URI can lead to humane readable information about this error
+      title:
+        type: string
+        description: a short description about the error occurred
+      status:
+        type: string
+        description: the corresponding HTTP result code
+      identifier:
+        type: string
+        description: a unique identifier of the given error
+      code:
+        type: string
+        description: the code of the given error
+  healthStatus:
+    type: object
+    description: A high level health status result 
+    properties:
+      status:
+        description: Contains a high level status of the health for this service
+        type: string
+        example: ok
+        enum: 
+        - 'ok'
+        - 'degraded'
+        - 'outage'
+  healthStatusComponents:
+    type: object
+    description: A health status result including the details of underlying components 
+    properties:
+      status:
+        description: Contains a high level status of the health for this service
+        type: string
+        example: 'outage'
+        enum: 
+        - 'ok'
+        - 'degraded'
+        - 'outage'
+      components:
+        type: array
+        items:
+          type: object
+          properties:
+            name:
+              type: string
+              description: the name of the underlying component
+              example: 'eventhandler'
+            status:
+              type: string
+              enum: 
+              - 'ok'
+              - 'degraded'
+              - 'outage'
+              description: the status of the component
+              example: 'outage'
+            errormessage:
+              type: string
+              description: Contains the actual message in case of a problem               
+              example: 'timeout'
+            details:
+              type: string
+              description: more information about the problem at hand
+              example: 'Messages are not received due to the eventhandler who seems to be too busy.'
+            type:
+              type: string
+              description: the type of problem that occurred
+              example: 'event'
+            code:
+              type: string
+              description: the code of the problem that occurred
+              example: 'TIMEOUT504'
+tags:
+  - name: Pizza
+    description: Pizza moves
+  - name: System
+    description: Technical operations for health checks, monitoring & caching
