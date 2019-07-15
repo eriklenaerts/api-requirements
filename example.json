@@ -1,7 +1,7 @@
 {
   "swagger": "2.0",
   "info": {
-    "version": "1.0.0",
+    "version": "2.0.5",
     "title": "Pizza Slicer API",
     "description": "A multitentant API To for ordering pizza's and distributing (aka \"slicing\") their parts at the a party of your choosing.",
     "contact": {
@@ -11,7 +11,7 @@
     }
   },
   "host": "api-gw.antwerpen.be",
-  "basePath": "/acpaas/pizza-service/v1",
+  "basePath": "/acpaas/pizza-service/v2",
   "schemes": [
     "https"
   ],
@@ -74,7 +74,7 @@
             "name": "pizza",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/pizzaBody"
+              "$ref": "#/definitions/pizzaBasic"
             }
           }
         ],
@@ -196,6 +196,135 @@
         }
       }
     },
+    "/pizzas/{id}/slice": {
+      "put": {
+        "summary": "Slices the pizza in a number of pieces",
+        "description": "Ready to dive in? Slice the pizza into 2, 4, 8 or 16 pieces",
+        "tags": [
+          "Pizza"
+        ],
+        "produces": [
+          "application/problem+json"
+        ],
+        "consumes": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/parameters/apikeyParam"
+          },
+          {
+            "$ref": "#/parameters/tenantParam"
+          },
+          {
+            "in": "path",
+            "name": "id",
+            "type": "string",
+            "required": true,
+            "minimum": 1,
+            "description": "The id of the template in the form of a uri."
+          },
+          {
+            "in": "body",
+            "name": "slices",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "number": {
+                  "type": "integer",
+                  "description": "select the number of pieces you want the pizza to be slided in.",
+                  "enum": [
+                    1,
+                    2,
+                    4,
+                    8,
+                    16
+                  ],
+                  "example": 8
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Pizza sliced"
+          },
+          "400": {
+            "description": "Bad request",
+            "schema": {
+              "$ref": "#/definitions/error"
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "schema": {
+              "$ref": "#/definitions/error"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "schema": {
+              "$ref": "#/definitions/error"
+            }
+          }
+        }
+      }
+    },
+    "/pizzas/{id}/cut": {
+      "post": {
+        "summary": "Cuts the pizza in 8 pieces",
+        "deprecated": true,
+        "tags": [
+          "Pizza"
+        ],
+        "produces": [
+          "application/problem+json"
+        ],
+        "consumes": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/parameters/apikeyParam"
+          },
+          {
+            "$ref": "#/parameters/tenantParam"
+          },
+          {
+            "in": "path",
+            "name": "id",
+            "type": "string",
+            "required": true,
+            "minimum": 1,
+            "description": "The id of the template in the form of a uri."
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Pizza sliced"
+          },
+          "400": {
+            "description": "Bad request",
+            "schema": {
+              "$ref": "#/definitions/error"
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "schema": {
+              "$ref": "#/definitions/error"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "schema": {
+              "$ref": "#/definitions/error"
+            }
+          }
+        }
+      }
+    },
     "/system/status/health": {
       "get": {
         "summary": "Returns the health status of this Service",
@@ -205,6 +334,14 @@
         ],
         "produces": [
           "application/json"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/parameters/apikeyParam"
+          },
+          {
+            "$ref": "#/parameters/tenantParam"
+          }
         ],
         "responses": {
           "200": {
@@ -233,11 +370,65 @@
           "application/json",
           "application/problem+json"
         ],
+        "parameters": [
+          {
+            "$ref": "#/parameters/apikeyParam"
+          },
+          {
+            "$ref": "#/parameters/tenantParam"
+          }
+        ],
         "responses": {
           "200": {
             "description": "OK",
             "schema": {
               "$ref": "#/definitions/healthStatusComponents"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "schema": {
+              "$ref": "#/definitions/error"
+            }
+          }
+        }
+      }
+    },
+    "/tenant/me": {
+      "get": {
+        "summary": "Returns the id of the given tenant",
+        "description": "Every party has a separate list of pizzas that we host in a separate tenant database.",
+        "tags": [
+          "System"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/parameters/apikeyParam"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "example": "198b64a5-9a48-4887-9b18-78344946dcc2"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "schema": {
+              "$ref": "#/definitions/error"
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "schema": {
+              "$ref": "#/definitions/error"
             }
           },
           "500": {
@@ -259,7 +450,7 @@
       "type": "string"
     },
     "tenantParam": {
-      "name": "tenant",
+      "name": "dgp-tenant-id",
       "description": "each party where pizza is needed is hosted on a separate tenant",
       "in": "header",
       "required": true,
@@ -267,7 +458,7 @@
     }
   },
   "definitions": {
-    "pizzaBody": {
+    "pizzaBasic": {
       "type": "object",
       "properties": {
         "name": {
@@ -316,7 +507,7 @@
           }
         },
         {
-          "$ref": "#/definitions/pizzaBody"
+          "$ref": "#/definitions/pizzaBasic"
         }
       ]
     },
