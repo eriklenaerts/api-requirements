@@ -1,0 +1,405 @@
+  swagger: '2.0'
+  info:
+    version: '1.0.0'
+    title: Some Service
+    description: This service allows you to retrieve information about some resources. They are a rare breed of resources spotted in the wild. 
+    contact:
+      name: your name
+      url: http://more.information.com/about/your/some/service
+      email: contact@email.com
+  host: api-gw.antwerpen.be
+  basePath: /acpaas/some-service
+  schemes: 
+  - https
+  paths:
+    "/someresources":
+      get:
+        summary: returns a list of some-resources containing information about its origin
+        description: Use paging options to retrieve a list of some-resources. Some-resources is particular useful for learning more about x y and z.
+        tags:
+          - SomeTag
+        produces:
+          - application/hal+json
+          - application/problem+json
+        parameters:
+          - $ref: "#/parameters/page"
+          - $ref: "#/parameters/pagesize"
+          - $ref: "#/parameters/pagingStrategy"
+        responses:
+          204:
+            description: some-resource created
+            schema:
+              $ref: '#/definitions/someResources'
+          400:
+            $ref: '#/responses/BadRequest'
+          500:
+            $ref: '#/responses/InternalServer'
+          default:
+            $ref: '#/responses/Unexpected'
+      post:
+        summary: Add a some-resource to the collection.
+        description: Provide the details of the some-resource you want to add. We'll figure out if it is already in our records or not. After all, we don\'t want to have duplicates of some-resource do we. One of each is enough in our world.
+        tags:
+        - SomeTag
+        produces:
+          - application/problem+json
+        parameters:
+        - in: body
+          name: someresource
+          description: The new some-resource to add to the lot.
+          schema:
+            $ref: '#/definitions/someResource'    
+        responses:
+          201:
+            description: some-resource created
+          409:
+            $ref: '#/responses/Duplicate'
+          400:
+            $ref: '#/responses/BadRequest'
+          500:
+            $ref: '#/responses/InternalServer'
+          default:
+            $ref: '#/responses/Unexpected'
+        
+    "/someresources/{id}":
+      get:
+        summary: retrieve one specific some-resource by its id
+        description: Returns a some-resource that provides more information about x, y and z
+        tags:
+          - SomeTag
+        produces:
+          - application/json
+          - application/problem+json
+        parameters:
+          - in: path
+            name: id
+            type: string
+            required: true
+            minimum: 1
+            description: The id of some resource.
+        responses:
+          200:
+            description: OK
+            schema:
+              $ref: '#/definitions/someResource'
+          400:
+            $ref: '#/responses/BadRequest'
+          404:
+            $ref: '#/responses/NotFound'
+          500:
+            $ref: '#/responses/InternalServer'
+          default:
+            $ref: '#/responses/Unexpected'
+      head:
+        summary: Check if a specific some-resource exists
+        description: Returns a HTTP 200 ok when the some-resource for the given id exists, otherwise a HTTP 404
+        tags:
+          - SomeTag
+        produces:
+          - application/json
+          - application/problem+json
+        parameters:
+          - in: path
+            name: id
+            type: string
+            required: true
+            minimum: 1
+            description: The id of some resource.
+        responses:
+          200:
+            description: OK
+          400:
+            $ref: '#/responses/BadRequest'
+          404:
+            $ref: '#/responses/NotFound'
+          500:
+            $ref: '#/responses/InternalServer'
+          default:
+            $ref: '#/responses/Unexpected'
+    "/status/health":
+      get:
+        summary: Returns the health status of this Service
+        description: Returns high level information about the service according to the status &amp; [monitoring spec of Digipolis](https://github.com/digipolisantwerpdocumentation/status-monitoring)
+        tags:
+        - System
+        produces:
+          - application/json
+        responses:
+          200:
+            description: OK
+            schema:
+              $ref: '#/definitions/healthStatus'  
+          400:
+            $ref: '#/responses/BadRequest'
+          500:
+            $ref: '#/responses/InternalServer'
+          default:
+            $ref: '#/responses/Unexpected'
+    "/status/health/components":
+      get:
+        summary: Returns the health status of this Service
+        description: Returns information about the service and its underlying components according to the status &amp; [monitoring spec of Digipolis](https://github.com/digipolisantwerpdocumentation/status-monitoring)
+        tags:
+        - System
+        produces:
+          - application/json
+          - application/problem+json
+        responses:
+          200:
+            description: OK
+            schema:
+              $ref: '#/definitions/healthStatusComponents'  
+          400:
+            $ref: '#/responses/BadRequest'
+          500:
+            $ref: '#/responses/InternalServer'
+          default:
+            $ref: '#/responses/Unexpected'
+    "/status/health/metrics":
+      get:
+        summary: Returns metric information about this service
+        description: Returns information about the service in a [Prometheus format](https://github.com/prometheus/docs/blob/master/content/docs/instrumenting/exposition_formats.md)
+        tags:
+        - System
+        produces:
+          - text/plain; version=0.0.4 
+          - application/problem+json
+        responses:
+          200:
+            description: Prometheus Metrics
+            schema:
+              type: string
+              example: |
+                  process_virtual_memory_bytes 897339392.0
+                  process_resident_memory_bytes 123064320.0
+                  process_start_time_seconds 1530601590.11
+                  process_cpu_seconds_total 2.8
+                  process_open_fds 46.0
+                  process_max_fds 1024.0
+                  python_info{implementation="CPython",major="3",minor="6",patchlevel="5",version="3.6.5"} 1.0
+                  flask_http_request_duration_seconds_bucket{le="0.005",method="GET",path="/favicon.ico",status="404"} 0.0
+                  flask_http_request_duration_seconds_bucket{le="0.01",method="GET",path="/favicon.ico",status="404"} 0.0
+                  flask_http_request_duration_seconds_bucket{le="0.025",method="GET",path="/favicon.ico",status="404"} 0.0
+                  flask_http_request_duration_seconds_bucket{le="0.05",method="GET",path="/favicon.ico",status="404"} 0.0
+                  flask_http_request_duration_seconds_bucket{le="0.075",method="GET",path="/favicon.ico",status="404"} 0.0
+                  flask_http_request_duration_seconds_bucket{le="0.1",method="GET",path="/favicon.ico",status="404"} 0.0
+                  flask_http_request_duration_seconds_bucket{le="0.25",method="GET",path="/favicon.ico",status="404"} 1.0
+                  flask_http_request_duration_seconds_bucket{le="0.5",method="GET",path="/favicon.ico",status="404"} 1.0
+                  flask_http_request_duration_seconds_bucket{le="0.75",method="GET",path="/favicon.ico",status="404"} 1.0
+                  flask_http_request_duration_seconds_bucket{le="1.0",method="GET",path="/favicon.ico",status="404"} 1.0
+                  flask_http_request_duration_seconds_bucket{le="2.5",method="GET",path="/favicon.ico",status="404"} 1.0
+                  flask_http_request_duration_seconds_bucket{le="5.0",method="GET",path="/favicon.ico",status="404"} 1.0
+                  flask_http_request_duration_seconds_bucket{le="7.5",method="GET",path="/favicon.ico",status="404"} 1.0
+                  flask_http_request_duration_seconds_bucket{le="10.0",method="GET",path="/favicon.ico",status="404"} 1.0
+                  flask_http_request_duration_seconds_bucket{le="+Inf",method="GET",path="/favicon.ico",status="404"} 1.0
+                  flask_http_request_duration_seconds_count{method="GET",path="/favicon.ico",status="404"} 1.0
+                  flask_http_request_duration_seconds_sum{method="GET",path="/favicon.ico",status="404"} 0.11943134200009808
+                  flask_http_request_duration_seconds_bucket{le="0.005",method="POST",path="/uploads",status="202"} 0.0
+                  flask_http_request_duration_seconds_bucket{le="0.01",method="POST",path="/uploads",status="202"} 0.0
+                  flask_http_request_duration_seconds_bucket{le="0.025",method="POST",path="/uploads",status="202"} 0.0
+                  flask_http_request_duration_seconds_bucket{le="0.05",method="POST",path="/uploads",status="202"} 1.0
+                  flask_http_request_duration_seconds_bucket{le="0.075",method="POST",path="/uploads",status="202"} 1.0
+                  flask_http_request_duration_seconds_bucket{le="0.1",method="POST",path="/uploads",status="202"} 1.0
+                  flask_http_request_duration_seconds_bucket{le="0.25",method="POST",path="/uploads",status="202"} 1.0
+                  flask_http_request_duration_seconds_bucket{le="0.5",method="POST",path="/uploads",status="202"} 1.0
+                  flask_http_request_duration_seconds_bucket{le="0.75",method="POST",path="/uploads",status="202"} 1.0
+                  flask_http_request_duration_seconds_bucket{le="1.0",method="POST",path="/uploads",status="202"} 1.0
+                  flask_http_request_duration_seconds_bucket{le="2.5",method="POST",path="/uploads",status="202"} 1.0
+                  flask_http_request_duration_seconds_bucket{le="5.0",method="POST",path="/uploads",status="202"} 1.0
+                  flask_http_request_duration_seconds_bucket{le="7.5",method="POST",path="/uploads",status="202"} 1.0
+                  flask_http_request_duration_seconds_bucket{le="10.0",method="POST",path="/uploads",status="202"} 1.0
+                  flask_http_request_duration_seconds_bucket{le="+Inf",method="POST",path="/uploads",status="202"} 1.0
+                  flask_http_request_duration_seconds_count{method="POST",path="/uploads",status="202"} 1.0
+                  flask_http_request_duration_seconds_sum{method="POST",path="/uploads",status="202"} 0.03629215999990265     
+          400:
+            $ref: '#/responses/BadRequest'
+          500:
+            $ref: '#/responses/InternalServer'
+          default:
+            $ref: '#/responses/Unexpected'
+  parameters:
+    page:
+      in: query
+      name: page
+      type: string
+      required: true
+      description: Starting offset for the list, this can be either a number or the literal 'last'
+    pagesize:
+      in: query
+      name: pagesize
+      type: integer
+      required: true
+      description: Max number of items for each page
+    pagingStrategy:  
+      in: query
+      name: paging-strategy
+      type: string
+      required: false
+      default: noCount
+      description: Specify the paging strategy, i.e. if totalPages and totalElements should be included in the response output 
+      enum: 
+      - noCount
+      - withCount    
+  responses:  
+    BadRequest:
+      description: Bad request
+      schema:
+        $ref: '#/definitions/error'
+    Duplicate:
+      description: There's a conflict, adding this would result into a duplicate
+      schema:
+        $ref: '#/definitions/error'
+    NotFound:
+      description: Not found
+      schema:
+        $ref: '#/definitions/error'
+    InternalServer:
+      description: Internal Server Error  
+      schema:
+        $ref: '#/definitions/error'
+    Unexpected:
+      description: Unexpected error
+      schema:
+        $ref: '#/definitions/error'
+  definitions:
+    someResource: 
+      type: object
+      properties:
+        id: 
+          type: string
+          description: the unique identifier of some resource
+        name: 
+          type: string
+          description: the name of some resource
+        length:
+          type: integer
+          description: More information about the length of this resource
+    someResources:
+      type: object
+      properties:
+        _links:
+          $ref: '#/definitions/links'
+        _embedded: 
+          type: object
+          description: the collection of some resources
+          properties:
+            someresources:
+              type: array
+              items:
+                $ref: '#/definitions/someResource'
+        _page:
+          $ref: '#/definitions/pages'
+    links:
+      type: object
+      description: provides navigational uri's to other pages of the collection
+      properties:
+        self:
+          type: string
+          description: contains a link to this page of this collection
+          example: 'https://template-api.digipolis.be/base?pagesize=5&page=5'
+        first:
+          type: string
+          description: contains a link to the first page of this collection
+          example: 'https://template-api.digipolis.be/base?pagesize=5&page=0'
+        last:
+          type: string
+          description: contains a link to the last page of this collection
+          example: 'https://template-api.digipolis.be/base?pagesize=5&page=17'
+        prev:
+          type: string
+          description: contains a link to the previous page of this collection
+          example: 'https://template-api.digipolis.be/base?pagesize=5&page=0'
+        next:
+          type: string
+          description: contains a link to the next page of this collection
+          example: 'https://template-api.digipolis.be/base?pagesize=5&page=10'
+    pages:
+      type: object
+      description: a generic model used to describe paging information when requesting a list of resources
+      required: 
+      - size
+      - number
+      properties:
+        size:
+          type: integer
+          description: returns the size of a page provided in the pagesize query parameter of the request 
+          example: '10'
+        totalElements:
+          type: integer
+          description: the total number of items in the resulting collection
+          example: '34'
+        totalPages:
+          type: integer
+          description: the total number of pages in the resulting array. This is calculated with the given size value 
+          example: '4'
+        number:
+          type: integer
+          description: return the page number provided in the page query parameter of the resuest
+          example: '0'    
+    error:
+      type: object
+      description: a generic model based on [RFC7807](https://tools.ietf.org/html/rfc7807) used to describe errors as a result of incorrect or failed HTTP requests .
+      properties:
+        type:
+          type: string
+          description: A URI identifying this error. The URI can lead to humane readable information about this error
+        title:
+          type: string
+          description: a short description about the error occurred
+        status:
+          type: string
+          description: the corresponding HTTP result code
+        identifier:
+          type: string
+          description: a unique identifier of the given error
+        code:
+          type: string
+          description: the code of the given error
+    healthStatus:
+      type: object
+      description: A high level health status result 
+      properties:
+        status:
+          description: Contains a high level status of the health for this service
+          type: string
+          example: outage
+          enum: 
+          - 'ok'
+          - 'degraded'
+          - 'outage'
+    healthStatusComponents:
+      allOf: 
+      - $ref: "#/definitions/healthStatus"
+      - type: object
+        description: A health status result including the details of underlying components 
+        properties:
+          components:
+            type: array
+            items:
+              type: object
+              properties:
+                name:
+                  type: string
+                  description: the name of the underlying component
+                  example: 'eventhandler'
+                errormessage:
+                  type: string
+                  description: Contains the actual message in case of a problem               
+                  example: 'timeout'
+                details:
+                  type: string
+                  description: more information about the problem at hand
+                  example: 'Messages are not received due to the eventhandler who seems to be too busy.'
+                type:
+                  type: string
+                  description: the type of problem that occurred
+                  example: 'event'
+                code:
+                  type: string
+                  description: the code of the problem that occurred
+                  example: 'TIMEOUT504'
+  tags:
+    - name: SomeTag
+      description: description here about your tag
+    - name: System
+      description: Technical operations for health checks, monitoring & caching
